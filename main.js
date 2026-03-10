@@ -100,25 +100,38 @@ function loadChat() {
 }
 
 /* =========================
-   INIT MODEL
+   INIT MODEL - Official Qwen2.5-1.5B from Hugging Face
 ========================= */
-
 async function initLLM() {
-  addMessage("system", "Loading model...");
+  addMessage("system", "Loading official Qwen2.5-1.5B-Instruct-q4f16_1 from Hugging Face...");
 
-  engine = await CreateWebWorkerMLCEngine(
-    new Worker("worker.js", { type: "module" }),
-    "Llama-3.2-1B-Instruct-q4f32_1-MLC",
-    {
-      model_url:
-        "https://4b159f6a3dc8edcf04d994a9a475005e.r2.cloudflarestorage.com/aiswarm/models/Llama-3.2-1B-Instruct-q4f32_1-MLC/",
-      initProgressCallback: (p) => {
-        addMessage("loading", JSON.stringify(p));
+  const modelRecord = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
+  const modelUrl = "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/";
+
+  try {
+    engine = await CreateWebWorkerMLCEngine(
+      new Worker("worker.js", { type: "module" }),
+      modelRecord,
+      {
+        model_url: modelUrl,
+        initProgressCallback: (report) => {
+          // Show progress in chat (you can improve this with a progress bar later)
+          const percent = Math.round(report.progress * 100);
+          addMessage("loading", `${report.text || "Downloading model..."} (${percent}%)`);
+        },
+        // Optional: smaller chunks = better for slower connections / mobile
+        // customConfig: {
+        //   context_window_size: 8192,
+        //   prefill_chunk_size: 512
+        // }
       }
-    }
-  );
+    );
 
-  addMessage("system", "Model loaded.");
+    addMessage("system", "Qwen2.5-1.5B loaded successfully! You can start chatting.");
+  } catch (err) {
+    addMessage("system", "Failed to load model: " + err.message);
+    console.error("Load error:", err);
+  }
 }
 
 /* =========================
