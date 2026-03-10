@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Matrix WebLLM Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Courier New", monospace;
+      background: #000;
+      color: #00ff41;
+      overflow: hidden;
+    }
+
+    /* Canvas behind everything */
+    #matrixCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 2rem;
+      letter-spacing: 3px;
+      text-shadow: 0 0 12px #00ff41;
+      animation: glitch 2s infinite;
+    }
+
+    #chat {
+      width: 90%;
+      height: 55vh;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #00ff41;
+      background: rgba(0, 0, 0, 0.6);
+      overflow-y: auto;
+      box-shadow: 0 0 20px #003b16;
+      animation: fadeIn 1.2s ease;
+    }
+
+    .msg {
+      margin: 12px 0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      max-width: 75%;
+      line-height: 1.4;
+      animation: typeIn 0.4s steps(40);
+      white-space: pre-wrap;
+    }
+
+    .you {
+      margin-left: auto;
+      border-left: 2px solid #00ff41;
+      color: #00ff41;
+      text-shadow: 0 0 8px #00ff41;
+    }
+
+    .ai {
+      border-left: 2px solid #008f2a;
+      color: #00ff41;
+      opacity: 0.9;
+    }
+
+    .system {
+      text-align: center;
+      opacity: 0.6;
+      font-size: 0.9rem;
+    }
+
+    .input-area {
+      width: 90%;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      animation: fadeIn 1.5s ease;
+    }
+
+    #input {
+      flex: 1;
+      padding: 14px;
+      border-radius: 6px;
+      border: 1px solid #00ff41;
+      background: rgba(0, 0, 0, 0.8);
+      color: #00ff41;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+      text-shadow: 0 0 6px #00ff41;
+    }
+
+    #input:focus {
+      box-shadow: 0 0 12px #00ff41;
+    }
+
+    #send {
+      padding: 14px 24px;
+      border: 1px solid #00ff41;
+      border-radius: 6px;
+      background: #001a0a;
+      color: #00ff41;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: 0.25s;
+      text-shadow: 0 0 6px #00ff41;
+    }
+
+    #send:hover {
+      background: #003b16;
+      box-shadow: 0 0 12px #00ff41;
+      transform: translateY(-2px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes typeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes glitch {
+      0% { text-shadow: 0 0 12px #00ff41; }
+      20% { text-shadow: 2px 0 12px #00ff41; }
+      40% { text-shadow: -2px 0 12px #00ff41; }
+      60% { text-shadow: 0 0 12px #00ff41; }
+      80% { text-shadow: 2px 0 12px #00ff41; }
+      100% { text-shadow: 0 0 12px #00ff41; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Canvas for Matrix Rain -->
+  <canvas id="matrixCanvas"></canvas>
+
+  <h1>M A T R I X &nbsp; C O N S O L E</h1>
+
+  <div id="chat"></div>
+
+  <div class="input-area">
+    <input id="input" placeholder="Type your query, operator..." />
+    <button id="send">Send</button>
+  </div>
+
+  <script>
+    /* MATRIX RAIN CANVAS */
+    const canvas = document.getElementById("matrixCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const letters = "アカサタナハマヤラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#00ff41";
+      ctx.font = fontSize + "px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const char = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+
+        drops[i]++;
+      }
+    }
+
+    setInterval(drawMatrix, 33);
+
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+
+  <script type="module" src="main.js"></script>
+
+</body>
+</html>
