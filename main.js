@@ -1,10 +1,51 @@
 import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
+/* =========================
+   DOM REFERENCES
+========================= */
+
 const chatBox = document.getElementById("chat");
 const input = document.getElementById("input");
 const sendBtn = document.getElementById("send");
+const sidebar = document.getElementById("sidebar");
+const collapseBtn = document.getElementById("collapseBtn");
+const ramUsageEl = document.getElementById("ramUsage");
+const netSpeedEl = document.getElementById("netSpeed");
+const netStatusEl = document.getElementById("netStatus");
 
 let engine = null;
+
+/* =========================
+   MARKDOWN RENDERER
+========================= */
+
+function renderMarkdown(text) {
+  if (!text) return "";
+  let t = text;
+
+  // Code blocks
+  t = t.replace(/```([\s\S]*?)```/gim, "<pre><code>$1</code></pre>");
+
+  // Headings
+  t = t.replace(/^### (.*)$/gim, "<h3>$1</h3>");
+  t = t.replace(/^## (.*)$/gim, "<h2>$1</h2>");
+  t = t.replace(/^# (.*)$/gim, "<h1>$1</h1>");
+
+  // Bold / italic
+  t = t.replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>");
+  t = t.replace(/\*(.*?)\*/gim, "<i>$1</i>");
+
+  // Inline code
+  t = t.replace(/`([^`]+)`/gim, "<code>$1</code>");
+
+  // Lists
+  t = t.replace(/^\s*[-*] (.*)$/gim, "<ul><li>$1</li></ul>");
+
+  // Line breaks
+  t = t.replace(/\n/g, "<br>");
+
+  return t.trim();
+}
 
 /* =========================
    MEMORY STORAGE (SAFE)
@@ -78,15 +119,45 @@ function trimConversation() {
 }
 
 /* =========================
-   UI
+   UI: COPILOT-STYLE BUBBLES
 ========================= */
 
 function addMessage(role, text) {
   const div = document.createElement("div");
-  div.className = "msg";
-  div.innerHTML = `<b>${role}:</b> ${text}`;
+
+  if (role === "you") {
+    div.className = "msg you";
+  } else if (role === "ai") {
+    div.className = "msg ai";
+  } else {
+    div.className = "msg system";
+  }
+
+  div.innerHTML = renderMarkdown(text);
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* =========================
+   THINKING DOTS
+========================= */
+
+function showThinking() {
+  const div = document.createElement("div");
+  div.className = "thinking";
+  div.id = "thinkingBubble";
+  div.innerHTML = `
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  `;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeThinking() {
+  const t = document.getElementById("thinkingBubble");
+  if (t) t.remove();
 }
 
 /* =========================
@@ -100,8 +171,79 @@ function loadChat() {
 }
 
 /* =========================
+   SIDEBAR COLLAPSE
+========================= */
+
+let collapsed = localStorage.getItem("sidebarCollapsed") === "true";
+
+function applySidebarState() {
+  if (collapsed) {
+    sidebar.classList.add("collapsed");
+    document.body.classList.add("sidebar-collapsed");
+  } else {
+    sidebar.classList.remove("collapsed");
+    document.body.classList.remove("sidebar-collapsed");
+  }
+}
+
+applySidebarState();
+
+collapseBtn.onclick = () => {
+  collapsed = !collapsed;
+  localStorage.setItem("sidebarCollapsed", collapsed);
+  applySidebarState();
+};
+
+/* =========================
+   SYSTEM PANEL: RAM
+========================= */
+
+function updateRAM() {
+  if (performance && performance.memory) {
+    const used = performance.memory.usedJSHeapSize;
+    const total = performance.memory.jsHeapSizeLimit;
+    const pct = ((used / total) * 100).toFixed(1);
+    ramUsageEl.textContent = pct + "%";
+  } else {
+    ramUsageEl.textContent = "--";
+  }
+}
+setInterval(updateRAM, 2000);
+
+/* =========================
+   SYSTEM PANEL: NETWORK STATUS
+========================= */
+
+function updateNetworkStatus() {
+  netStatusEl.textContent = navigator.onLine ? "Online" : "Offline";
+}
+window.addEventListener("online", updateNetworkStatus);
+window.addEventListener("offline", updateNetworkStatus);
+updateNetworkStatus();
+
+/* =========================
+   SYSTEM PANEL: SPEED TEST
+========================= */
+
+async function testNetworkSpeed() {
+  const start = performance.now();
+  try {
+    await fetch("https://speed.cloudflare.com/__down?bytes=1000000", {
+      cache: "no-store"
+    });
+    const duration = (performance.now() - start) / 1000;
+    const mbps = (8 / duration).toFixed(1);
+    netSpeedEl.textContent = mbps + " Mbps";
+  } catch (e) {
+    netSpeedEl.textContent = "--";
+  }
+}
+setInterval(testNetworkSpeed, 5000);
+
+/* =========================
    INIT MODEL - Official Qwen2.5-1.5B from Hugging Face
 ========================= */
+
 async function initLLM() {
   addMessage("system", "Loading official Qwen2.5-1.5B-Instruct-q4f16_1 from Hugging Face...");
 
@@ -115,15 +257,12 @@ async function initLLM() {
       {
         model_url: modelUrl,
         initProgressCallback: (report) => {
-          // Show progress in chat (you can improve this with a progress bar later)
           const percent = Math.round(report.progress * 100);
-          addMessage("loading", `${report.text || "Downloading model..."} (${percent}%)`);
-        },
-        // Optional: smaller chunks = better for slower connections / mobile
-        // customConfig: {
-        //   context_window_size: 8192,
-        //   prefill_chunk_size: 512
-        // }
+          addMessage(
+            "system",
+            `${report.text || "Downloading model..."} (${percent}%)`
+          );
+        }
       }
     );
 
@@ -181,7 +320,6 @@ sendBtn.onclick = async () => {
 
   let searchContext = "";
 
-  // trigger search if user starts with "search "
   if (text.toLowerCase().startsWith("search ")) {
     const q = text.slice(7).trim() || text;
     addMessage("system", `Searching: ${q}`);
@@ -193,25 +331,34 @@ sendBtn.onclick = async () => {
   if (searchContext) systemParts.push("Web search results:\n" + searchContext);
 
   const systemContent =
-    systemParts.join("\n\n") || "You are a helpful assistant.";
+    systemParts.join("\n\n") || "You are Nodevora, a helpful assistant.";
 
   const messages = [
     { role: "system", content: systemContent },
     ...conversationMemory
   ];
 
-  const reply = await engine.chat.completions.create({
-    messages,
-    stream: false
-  });
+  showThinking();
 
-  const aiText = reply.choices[0].message.content;
+  try {
+    const reply = await engine.chat.completions.create({
+      messages,
+      stream: false
+    });
 
-  addMessage("ai", aiText);
+    const aiText = reply.choices[0].message.content;
 
-  conversationMemory.push({ role: "assistant", content: aiText });
-  trimConversation();
-  saveMemory();
+    removeThinking();
+    addMessage("ai", aiText);
+
+    conversationMemory.push({ role: "assistant", content: aiText });
+    trimConversation();
+    saveMemory();
+  } catch (e) {
+    removeThinking();
+    addMessage("system", "Error generating response: " + e.message);
+    console.error(e);
+  }
 };
 
 /* =========================
@@ -220,3 +367,4 @@ sendBtn.onclick = async () => {
 
 loadChat();
 initLLM();
+
