@@ -6,17 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
-    /* --- GLOBAL --- */
+    /* GLOBAL */
     body {
       margin: 0;
       padding: 0;
-      font-family: "Inter", "Segoe UI", sans-serif;
+      font-family: "Inter", sans-serif;
       background: #0b0b0f;
       color: #e2e2e7;
       overflow: hidden;
+      display: flex;
+      height: 100vh;
     }
 
-    /* Cosmic gradient background */
+    /* Cosmic gradient */
     body::before {
       content: "";
       position: fixed;
@@ -27,24 +29,102 @@
       filter: blur(80px);
     }
 
-    /* Soft starfield */
+    /* Starfield canvas */
     #matrixCanvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       z-index: -1;
       opacity: 0.25;
     }
 
-    /* --- TITLE --- */
+    /* SIDEBAR */
+    #sidebar {
+      width: 260px;
+      background: rgba(15, 15, 22, 0.75);
+      backdrop-filter: blur(14px);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    #sidebar h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #b06cff, #6ef7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #newChatBtn {
+      width: 100%;
+      padding: 10px;
+      background: #2a2a33;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-bottom: 12px;
+    }
+
+    #newChatBtn:hover {
+      background: #3a3a44;
+    }
+
+    #chatList {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chat-item {
+      padding: 10px;
+      margin-bottom: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.2s;
+    }
+
+    .chat-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .chat-item.active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .delete-btn {
+      opacity: 0.6;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 4px;
+    }
+
+    .delete-btn:hover {
+      opacity: 1;
+    }
+
+    /* MAIN CHAT AREA */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
     h1 {
       text-align: center;
-      margin-top: 25px;
-      font-size: 2.4rem;
+      margin: 18px 0;
+      font-size: 2rem;
       font-weight: 700;
-      letter-spacing: 1px;
       background: linear-gradient(90deg, #b06cff, #6ef7ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -57,19 +137,16 @@
       100% { transform: translateY(0); }
     }
 
-    /* --- CHAT WINDOW --- */
     #chat {
-      width: 90%;
-      height: 55vh;
-      margin: 20px auto;
+      flex: 1;
+      margin: 0 20px;
       padding: 20px;
       border-radius: 14px;
       background: rgba(20, 20, 28, 0.65);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(140, 90, 255, 0.35);
-      box-shadow: 0 0 25px #000000aa;
       overflow-y: auto;
-      animation: fadeIn 1.2s ease;
+      box-shadow: 0 0 25px #000000aa;
     }
 
     .msg {
@@ -94,45 +171,33 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .system {
-      text-align: center;
-      opacity: 0.6;
-      font-size: 0.85rem;
-    }
-
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- INPUT AREA --- */
+    /* INPUT AREA */
     .input-area {
-      width: 90%;
-      margin: 0 auto;
       display: flex;
+      padding: 14px 20px;
       gap: 12px;
-      animation: fadeIn 1.5s ease;
+      background: rgba(15, 15, 22, 0.75);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     #input {
       flex: 1;
-      padding: 16px;
+      padding: 14px;
       border-radius: 12px;
       border: 1px solid rgba(140, 90, 255, 0.4);
       background: rgba(20, 20, 28, 0.85);
       color: #e2e2e7;
       font-size: 1rem;
       outline: none;
-      transition: 0.3s;
-    }
-
-    #input:focus {
-      border-color: #b06cff;
-      box-shadow: 0 0 12px #b06cff55;
     }
 
     #send {
-      padding: 16px 26px;
+      padding: 14px 22px;
       border-radius: 12px;
       border: none;
       background: linear-gradient(135deg, #6f3bff, #b06cff);
@@ -149,6 +214,26 @@
       box-shadow: 0 0 18px #b06cffaa;
     }
 
+    /* SYSTEM PANEL */
+    #systemPanel {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background: rgba(20, 20, 28, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      z-index: 999;
+      box-shadow: 0 0 18px #00000088;
+      animation: fadeIn 1s ease;
+    }
+
+    #systemPanel .metric {
+      margin: 4px 0;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -160,22 +245,42 @@
 
   <canvas id="matrixCanvas"></canvas>
 
-  <h1>Nodevora Console</h1>
-
-  <div id="chat"></div>
-
-  <div class="input-area">
-    <input id="input" placeholder="Ask Nodevora anything..." />
-    <button id="send">Send</button>
+  <!-- SYSTEM PANEL -->
+  <div id="systemPanel">
+    <div class="metric"><strong>RAM:</strong> <span id="ramUsage">--%</span></div>
+    <div class="metric"><strong>Net:</strong> <span id="netSpeed">-- Mbps</span></div>
+    <div class="metric"><strong>Status:</strong> <span id="netStatus">Offline</span></div>
   </div>
 
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <h2>Nodevora</h2>
+    <button id="newChatBtn">+ New Chat</button>
+    <div id="chatList"></div>
+  </div>
+
+  <!-- MAIN CHAT AREA -->
+  <div id="main">
+    <h1>Nodevora Console</h1>
+    <div id="chat"></div>
+
+    <div class="input-area">
+      <input id="input" placeholder="Ask Nodevora anything..." />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <!-- STARFIELD -->
   <script>
-    /* --- STARFIELD (replaces Matrix rain but keeps your canvas logic) --- */
     const canvas = document.getElementById("matrixCanvas");
     const ctx = canvas.getContext("2d");
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
 
     const stars = Array.from({ length: 200 }, () => ({
       x: Math.random() * canvas.width,
@@ -197,14 +302,134 @@
     }
 
     setInterval(drawStars, 33);
-
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
   </script>
 
-  <script type="module" src="main.js"></script>
+  <!-- CHAT + SYSTEM PANEL LOGIC -->
+  <script>
+    /* CHAT STORAGE */
+    let chats = JSON.parse(localStorage.getItem("nodevora_chats") || "{}");
+    let currentChat = null;
+
+    function save() {
+      localStorage.setItem("nodevora_chats", JSON.stringify(chats));
+    }
+
+    function newChat() {
+      currentChat = Date.now().toString();
+      chats[currentChat] = [];
+      save();
+      renderChatList();
+      renderMessages();
+    }
+
+    function deleteChat(id) {
+      delete chats[id];
+      save();
+      if (currentChat === id) newChat();
+      renderChatList();
+    }
+
+    function renderChatList() {
+      const list = document.getElementById("chatList");
+      list.innerHTML = "";
+
+      Object.keys(chats).forEach(id => {
+        const item = document.createElement("div");
+        item.className = "chat-item" + (id === currentChat ? " active" : "");
+        item.innerHTML = `
+          <span>${chats[id][0]?.text?.slice(0, 20) || "New Chat"}</span>
+          <span class="delete-btn">🗑</span>
+        `;
+
+        item.onclick = e => {
+          if (e.target.classList.contains("delete-btn")) return;
+          currentChat = id;
+          renderChatList();
+          renderMessages();
+        };
+
+        item.querySelector(".delete-btn").onclick = e => {
+          e.stopPropagation();
+          deleteChat(id);
+        };
+
+        list.appendChild(item);
+      });
+    }
+
+    function renderMessages() {
+      const box = document.getElementById("chat");
+      box.innerHTML = "";
+
+      (chats[currentChat] || []).forEach(m => {
+        const div = document.createElement("div");
+        div.className = "msg " + m.role;
+        div.textContent = m.text;
+        box.appendChild(div);
+      });
+
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      chats[currentChat].push({ role: "you", text });
+      save();
+      renderMessages();
+      input.value = "";
+
+      const aiResponse = "AI response placeholder";
+      chats[currentChat].push({ role: "ai", text: aiResponse });
+      save();
+      renderMessages();
+    }
+
+    document.getElementById("send").onclick = sendMessage;
+    document.getElementById("newChatBtn").onclick = newChat;
+
+    newChat();
+
+    /* SYSTEM PANEL — BROWSER ONLY */
+
+    /* RAM USAGE */
+    function updateRAM() {
+      if (performance.memory) {
+        const used = performance.memory.usedJSHeapSize;
+        const total = performance.memory.jsHeapSizeLimit;
+        const pct = ((used / total) * 100).toFixed(1);
+        document.getElementById("ramUsage").textContent = pct + "%";
+      } else {
+        document.getElementById("ramUsage").textContent = "--";
+      }
+    }
+    setInterval(updateRAM, 2000);
+
+    /* ONLINE/OFFLINE */
+    function updateNetworkStatus() {
+      document.getElementById("netStatus").textContent =
+        navigator.onLine ? "Online" : "Offline";
+    }
+    window.addEventListener("online", updateNetworkStatus);
+    window.addEventListener("offline", updateNetworkStatus);
+    updateNetworkStatus();
+
+    /* NETWORK SPEED */
+    async function testNetworkSpeed() {
+      const start = performance.now();
+      try {
+        await fetch("https://speed.cloudflare.com/__down?bytes=1000000", { cache: "no-store" });
+        const duration = (performance.now() - start) / 1000;
+        const mbps = (8 / duration).toFixed(1);
+        document.getElementById("netSpeed").textContent = mbps + " Mbps";
+      } catch {
+        document.getElementById("netSpeed").textContent = "--";
+      }
+    }
+    setInterval(testNetworkSpeed, 5000);
+  </script>
 
 </body>
 </html>
