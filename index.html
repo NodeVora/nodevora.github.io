@@ -2,450 +2,209 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Nodevora | Terminal_v1.0.4</title>
+  <title>Nodevora</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;700&display=swap" rel="stylesheet">
-  
+
   <style>
-    :root {
-      --bg-black: #050505;
-      --sidebar-bg: #0a0a0a;
-      --accent-cyan: #00f2ff;
-      --accent-dim: #004444;
-      --accent-red: #ff4444;
-      --text-main: #e0e0e0;
-      --border-color: #1a1a1a;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-
-    * { box-sizing: border-box; }
-
+    /* --- GLOBAL --- */
     body {
-      margin: 0; padding: 0;
-      font-family: var(--font-mono);
-      background: var(--bg-black);
-      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      background: #0b0b0f;
+      color: #e2e2e7;
       overflow: hidden;
-      height: 100vh;
-      display: flex;
     }
 
-    /* --- SCANLINE EFFECT --- */
-    body::after {
-      content: " ";
+    /* Cosmic gradient background */
+    body::before {
+      content: "";
       position: fixed;
       inset: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                  linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-      background-size: 100% 4px, 3px 100%;
-      pointer-events: none;
-      z-index: 100;
+      background: radial-gradient(circle at 20% 30%, #3a1b8f55, transparent 60%),
+                  radial-gradient(circle at 80% 70%, #0fffc855, transparent 60%);
+      z-index: -2;
+      filter: blur(80px);
     }
 
-    /* --- SIDEBAR --- */
-    #sidebar {
-      width: 280px;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      z-index: 10;
-    }
-
-    .sidebar-header {
-      padding: 20px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    #new-chat-btn {
+    /* Soft starfield */
+    #matrixCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      padding: 12px;
-      background: transparent;
-      border: 1px dashed var(--accent-dim);
-      color: var(--accent-cyan);
-      font-family: var(--font-mono);
-      cursor: pointer;
-      text-transform: uppercase;
-      font-size: 0.7rem;
-      transition: 0.2s;
-    }
-
-    #new-chat-btn:hover {
-      border-color: var(--accent-cyan);
-      background: rgba(0, 242, 255, 0.05);
-      box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
-    }
-
-    #chat-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
-
-    .chat-history-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      margin-bottom: 5px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: 0.2s;
-      border: 1px solid transparent;
-    }
-
-    .chat-history-item:hover {
-      background: rgba(255,255,255,0.03);
-    }
-
-    .chat-history-item.active {
-      border-color: var(--accent-dim);
-      background: rgba(0, 242, 255, 0.03);
-    }
-
-    .chat-title-text {
-      flex: 1;
-      font-size: 0.8rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: #777;
-    }
-
-    .chat-history-item.active .chat-title-text { color: var(--accent-cyan); }
-    .chat-history-item:hover .chat-title-text { color: #fff; }
-
-    .delete-btn {
-      opacity: 0;
-      color: #444;
-      font-size: 0.65rem;
-      padding: 2px 4px;
-      background: transparent;
-      border: 1px solid transparent;
-      cursor: pointer;
-      font-family: var(--font-mono);
-      margin-left: 8px;
-    }
-
-    .chat-history-item:hover .delete-btn { opacity: 1; }
-    .delete-btn:hover { color: var(--accent-red); border-color: var(--accent-red); }
-
-    /* --- MAIN PANEL --- */
-    #main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    #gridCanvas {
-      position: absolute;
-      inset: 0;
+      height: 100%;
       z-index: -1;
-      opacity: 0.12;
+      opacity: 0.25;
     }
 
+    /* --- TITLE --- */
     h1 {
-      margin: 20px 40px;
-      font-size: 0.9rem;
-      letter-spacing: 3px;
-      color: var(--accent-cyan);
-      text-transform: uppercase;
-      animation: glitch 4s infinite;
-    }
-
-    @keyframes glitch {
-      0%, 90%, 100% { opacity: 1; transform: scaleY(1); }
-      92% { opacity: 0.5; transform: skewX(10deg); }
-      94% { opacity: 1; transform: scaleY(1.1); }
-    }
-
-    #chat-display {
-      flex: 1;
-      padding: 20px 40px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border-color) transparent;
-    }
-
-    /* --- MESSAGES --- */
-    .msg {
-      margin-bottom: 30px;
-      max-width: 900px;
-      animation: fadeIn 0.4s ease-out forwards;
-    }
-
-    .msg-label {
-      font-size: 0.6rem;
+      text-align: center;
+      margin-top: 25px;
+      font-size: 2.4rem;
       font-weight: 700;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      display: block;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #b06cff, #6ef7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: float 4s ease-in-out infinite;
     }
 
-    .you .msg-label { color: var(--accent-cyan); }
-    .ai .msg-label { color: #555; }
-
-    .msg-text {
-      line-height: 1.7;
-      font-size: 0.95rem;
-      word-wrap: break-word;
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
     }
 
-    .typing::after {
-      content: "█";
-      animation: blink 0.8s infinite;
-      color: var(--accent-cyan);
-      margin-left: 5px;
+    /* --- CHAT WINDOW --- */
+    #chat {
+      width: 90%;
+      height: 55vh;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 14px;
+      background: rgba(20, 20, 28, 0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(140, 90, 255, 0.35);
+      box-shadow: 0 0 25px #000000aa;
+      overflow-y: auto;
+      animation: fadeIn 1.2s ease;
     }
 
-    /* --- INPUT --- */
+    .msg {
+      margin: 14px 0;
+      padding: 12px 16px;
+      border-radius: 10px;
+      max-width: 75%;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      animation: fadeInUp 0.35s ease;
+    }
+
+    .you {
+      margin-left: auto;
+      background: linear-gradient(135deg, #6f3bff, #b06cff);
+      color: white;
+      box-shadow: 0 0 12px #6f3bff88;
+    }
+
+    .ai {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .system {
+      text-align: center;
+      opacity: 0.6;
+      font-size: 0.85rem;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- INPUT AREA --- */
     .input-area {
-      padding: 20px 40px 40px;
-    }
-
-    .input-box {
-      max-width: 900px;
+      width: 90%;
+      margin: 0 auto;
       display: flex;
-      background: #000;
-      border: 1px solid var(--border-color);
-      padding: 5px;
-      transition: border-color 0.3s;
+      gap: 12px;
+      animation: fadeIn 1.5s ease;
     }
 
-    .input-box:focus-within {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
-    }
-
-    #user-input {
+    #input {
       flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      padding: 15px;
-      font-family: var(--font-mono);
-      font-size: 0.95rem;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(140, 90, 255, 0.4);
+      background: rgba(20, 20, 28, 0.85);
+      color: #e2e2e7;
+      font-size: 1rem;
       outline: none;
+      transition: 0.3s;
     }
 
-    #send-btn {
-      background: transparent;
+    #input:focus {
+      border-color: #b06cff;
+      box-shadow: 0 0 12px #b06cff55;
+    }
+
+    #send {
+      padding: 16px 26px;
+      border-radius: 12px;
       border: none;
-      color: var(--accent-cyan);
+      background: linear-gradient(135deg, #6f3bff, #b06cff);
+      color: white;
       cursor: pointer;
-      padding: 0 25px;
-      font-weight: bold;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-      font-size: 0.8rem;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: 0.25s;
+      box-shadow: 0 0 12px #6f3bff88;
     }
 
-    #send-btn:hover { background: var(--accent-dim); color: #fff; }
+    #send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px #b06cffaa;
+    }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes blink { 50% { opacity: 0; } }
-
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: var(--border-color); }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   </style>
 </head>
+
 <body>
 
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <button id="new-chat-btn">+ New Data Stream</button>
-    </div>
-    <div id="chat-list"></div>
-  </aside>
+  <canvas id="matrixCanvas"></canvas>
 
-  <main id="main-content">
-    <canvas id="gridCanvas"></canvas>
-    <h1>Nodevora_OS // Terminal v1.0.4</h1>
+  <h1>Nodevora Console</h1>
 
-    <div id="chat-display"></div>
+  <div id="chat"></div>
 
-    <div class="input-area">
-      <div class="input-box">
-        <input id="user-input" autocomplete="off" placeholder="TYPE QUERY HERE..." />
-        <button id="send-btn">Execute</button>
-      </div>
-    </div>
-  </main>
+  <div class="input-area">
+    <input id="input" placeholder="Ask Nodevora anything..." />
+    <button id="send">Send</button>
+  </div>
 
   <script>
-    /* --- DATA MANAGEMENT --- */
-    let chats = JSON.parse(localStorage.getItem('node_chats')) || [];
-    let activeId = localStorage.getItem('node_active_id') || null;
+    /* --- STARFIELD (replaces Matrix rain but keeps your canvas logic) --- */
+    const canvas = document.getElementById("matrixCanvas");
+    const ctx = canvas.getContext("2d");
 
-    const listEl = document.getElementById('chat-list');
-    const displayEl = document.getElementById('chat-display');
-    const inputEl = document.getElementById('user-input');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    function sync() {
-      localStorage.setItem('node_chats', JSON.stringify(chats));
-      localStorage.setItem('node_active_id', activeId);
-      renderSidebar();
-    }
+    const stars = Array.from({ length: 200 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 2,
+      speed: 0.2 + Math.random() * 0.8
+    }));
 
-    function createChat() {
-      const id = Date.now().toString();
-      const newChat = {
-        id: id,
-        title: "Initial Buffer",
-        messages: [{ role: 'ai', text: "Systems online. Nodevora logic initialized. Awaiting user input..." }]
-      };
-      chats.unshift(newChat);
-      activeId = id;
-      sync();
-      loadChat(id);
-    }
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
 
-    function loadChat(id) {
-      activeId = id;
-      const chat = chats.find(c => c.id === id);
-      displayEl.innerHTML = '';
-      chat.messages.forEach(m => appendUI(m.role, m.text, false));
-      sync();
-    }
-
-    function deleteChat(id) {
-      if (confirm("PURGE DATA STREAM? This action cannot be undone.")) {
-        chats = chats.filter(c => c.id !== id);
-        if (activeId === id) {
-          chats.length > 0 ? loadChat(chats[0].id) : createChat();
-        } else {
-          sync();
-        }
-      }
-    }
-
-    function renderSidebar() {
-      listEl.innerHTML = '';
-      chats.forEach(chat => {
-        const item = document.createElement('div');
-        item.className = `chat-history-item ${chat.id === activeId ? 'active' : ''}`;
-        
-        const title = document.createElement('span');
-        title.className = 'chat-title-text';
-        title.innerText = chat.title;
-        title.onclick = () => loadChat(chat.id);
-        
-        const del = document.createElement('button');
-        del.className = 'delete-btn';
-        del.innerText = '[DEL]';
-        del.onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
-
-        item.appendChild(title);
-        item.appendChild(del);
-        listEl.appendChild(item);
+      stars.forEach(s => {
+        ctx.globalAlpha = 0.4 + Math.random() * 0.6;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+        s.y += s.speed;
+        if (s.y > canvas.height) s.y = 0;
       });
     }
 
-    /* --- UI & ANIMATION --- */
-    function appendUI(role, text, animate = false) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `msg ${role}`;
-      
-      const lbl = document.createElement('span');
-      lbl.className = 'msg-label';
-      lbl.innerText = role === 'you' ? 'User_Admin' : 'Nodevora_AI';
-      
-      const txt = document.createElement('div');
-      txt.className = 'msg-text';
-      
-      msgDiv.appendChild(lbl);
-      msgDiv.appendChild(txt);
-      displayEl.appendChild(msgDiv);
-      displayEl.scrollTop = displayEl.scrollHeight;
+    setInterval(drawStars, 33);
 
-      if (animate) {
-        typeEffect(txt, text);
-      } else {
-        txt.innerText = text;
-      }
-    }
-
-    function typeEffect(el, text) {
-      el.classList.add("typing");
-      let i = 0;
-      function type() {
-        if (i < text.length) {
-          el.innerHTML += text.charAt(i);
-          i++;
-          displayEl.scrollTop = displayEl.scrollHeight;
-          let speed = 20 + Math.random() * 15;
-          if (text.charAt(i-1) === "." || text.charAt(i-1) === "?") speed += 200;
-          setTimeout(type, speed);
-        } else {
-          el.classList.remove("typing");
-        }
-      }
-      type();
-    }
-
-    function handleSend() {
-      const val = inputEl.value.trim();
-      if (!val || !activeId) return;
-
-      const chat = chats.find(c => c.id === activeId);
-      
-      // Auto-name chat on first user message
-      if (chat.messages.length === 1) {
-        chat.title = val.substring(0, 20) + (val.length > 20 ? "..." : "");
-      }
-
-      chat.messages.push({ role: 'you', text: val });
-      appendUI('you', val, false);
-      inputEl.value = '';
-
-      setTimeout(() => {
-        const response = "Query analyzed. Data packet logged to local sequence. Result: Logic consistent with Nodevora parameters.";
-        chat.messages.push({ role: 'ai', text: response });
-        appendUI('ai', response, true);
-        sync();
-      }, 700);
-    }
-
-    /* --- BACKGROUND ANIMATION --- */
-    const canvas = document.getElementById("gridCanvas");
-    const ctx = canvas.getContext("2d");
-    let w, h, offset = 0;
-
-    function resize() {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-    }
-    window.onresize = resize;
-    resize();
-
-    function draw() {
-      ctx.clearRect(0,0,w,h);
-      ctx.strokeStyle = "#00f2ff";
-      ctx.lineWidth = 0.5;
-      offset = (offset + 0.4) % 50;
-
-      for(let x=0; x<w; x+=50) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-      }
-      for(let y=offset; y<h; y+=50) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-      }
-      requestAnimationFrame(draw);
-    }
-    draw();
-
-    /* --- INIT --- */
-    document.getElementById('new-chat-btn').onclick = createChat;
-    document.getElementById('send-btn').onclick = handleSend;
-    inputEl.onkeypress = (e) => { if(e.key === 'Enter') handleSend(); };
-
-    if (chats.length === 0) createChat();
-    else loadChat(activeId || chats[0].id);
-
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
   </script>
+
+  <script type="module" src="main.js"></script>
+
 </body>
 </html>
-  
-  
