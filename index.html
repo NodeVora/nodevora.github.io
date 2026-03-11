@@ -2,63 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Nodevora</title>
+  <title>Nodevora – Copilot Style</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: "Inter", sans-serif;
-      background: #0b0b0f;
-      color: #e2e2e7;
-      overflow: hidden;
-      display: flex;
-      height: 100vh;
     }
 
-    body::before {
-      content: "";
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(to bottom, #f6f7f9, #ffffff);
+      color: #1a1a1a;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    #header {
       position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 20% 30%, #3a1b8f55, transparent 60%),
-                  radial-gradient(circle at 80% 70%, #0fffc855, transparent 60%);
-      z-index: -2;
-      filter: blur(80px);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
     }
 
     /* COLLAPSE BUTTON */
     #collapseBtn {
       position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      background: rgba(20, 20, 28, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #fff;
-      padding: 8px 12px;
+      top: 14px;
+      left: 14px;
+      z-index: 1100;
+      background: #ffffff;
+      border: 1px solid #d0d0d0;
       border-radius: 8px;
+      padding: 6px 10px;
       cursor: pointer;
-      font-size: 1.2rem;
-      transition: 0.25s;
+      font-size: 20px;
+      transition: background 0.2s;
     }
 
     #collapseBtn:hover {
-      background: rgba(40, 40, 48, 0.85);
+      background: #f0f0f0;
     }
 
     /* SIDEBAR */
     #sidebar {
-      width: 260px;
-      background: rgba(15, 15, 22, 0.75);
-      backdrop-filter: blur(14px);
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      position: fixed;
+      top: 64px;
+      left: 0;
+      width: 72px;
+      height: calc(100vh - 64px);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid #e5e5e5;
+      padding-top: 20px;
       display: flex;
       flex-direction: column;
-      padding: 14px;
-      box-sizing: border-box;
+      align-items: center;
+      gap: 16px;
       transition: width 0.35s ease, opacity 0.35s ease;
+      z-index: 900;
     }
 
     #sidebar.collapsed {
@@ -67,200 +84,221 @@
       overflow: hidden;
     }
 
-    #sidebar h2 {
-      margin: 0 0 12px 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      background: linear-gradient(90deg, #b06cff, #6ef7ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    #newChatBtn {
-      width: 100%;
-      padding: 10px;
-      background: #2a2a33;
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      cursor: pointer;
-      transition: 0.2s;
-      margin-bottom: 12px;
-    }
-
-    #newChatBtn:hover {
-      background: #3a3a44;
-    }
-
-    #chatList {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .chat-item {
-      padding: 10px;
-      margin-bottom: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      cursor: pointer;
+    .side-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      transition: 0.2s;
-    }
-
-    .chat-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .chat-item.active {
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-    .delete-btn {
-      opacity: 0.6;
+      justify-content: center;
       cursor: pointer;
-      font-size: 0.9rem;
-      padding: 4px;
+      font-size: 20px;
+      transition: background 0.2s;
     }
 
-    .delete-btn:hover {
-      opacity: 1;
+    .side-icon:hover {
+      background: #f0f0f0;
     }
 
     /* MAIN */
     #main {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      margin-left: 72px;
+      margin-top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+      padding: 40px 0;
       transition: margin-left 0.35s ease;
     }
 
     body.sidebar-collapsed #main {
-      margin-left: 0 !important;
+      margin-left: 0;
     }
 
-    h1 {
-      text-align: center;
-      margin: 18px 0;
-      font-size: 2rem;
-      font-weight: 700;
-      background: linear-gradient(90deg, #b06cff, #6ef7ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
+    /* CHAT COLUMN */
     #chat {
-      flex: 1;
-      margin: 0 20px;
-      padding: 20px;
-      border-radius: 14px;
-      background: rgba(20, 20, 28, 0.65);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(140, 90, 255, 0.35);
-      overflow-y: auto;
-      box-shadow: 0 0 25px #000000aa;
+      width: 900px;
+      max-width: 90%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Copilot-style message animation */
+    @keyframes copilotMessageIn {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     .msg {
-      margin: 14px 0;
-      padding: 12px 16px;
-      border-radius: 10px;
-      max-width: 75%;
+      padding: 16px 20px;
+      border-radius: 22px;
+      max-width: 80%;
       line-height: 1.5;
-      white-space: pre-wrap;
-      animation: fadeInUp 0.35s ease;
+      font-size: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      animation: copilotMessageIn 0.28s ease-out;
     }
 
     .you {
-      margin-left: auto;
-      background: linear-gradient(135deg, #6f3bff, #b06cff);
-      color: white;
-      box-shadow: 0 0 12px #6f3bff88;
+      align-self: flex-end;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
     }
 
     .ai {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      align-self: flex-start;
+      background: #f3f4f6;
+      border: 1px solid #e0e0e0;
     }
 
     .system {
-      opacity: 0.7;
-      text-align: center;
-      font-size: 0.85rem;
+      align-self: center;
+      background: #eef0f3;
+      border: 1px solid #dcdcdc;
+      font-size: 14px;
+      opacity: 0.8;
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Markdown styling */
+    .msg.ai h1,
+    .msg.ai h2,
+    .msg.ai h3 {
+      font-weight: 600;
+      margin: 12px 0 6px;
     }
 
-    /* INPUT */
-    .input-area {
-      display: flex;
+    .msg.ai p {
+      margin: 6px 0;
+    }
+
+    .msg.ai ul {
+      margin: 6px 0 6px 20px;
+    }
+
+    .msg.ai code {
+      background: #e8e9ec;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+    }
+
+    .msg.ai pre {
+      background: #f1f2f4;
+      padding: 12px;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      border: 1px solid #e0e0e0;
+    }
+
+    /* Thinking dots bubble */
+    .thinking {
+      align-self: flex-start;
+      background: #f3f4f6;
+      border: 1px solid #e0e0e0;
       padding: 14px 20px;
+      border-radius: 22px;
+      font-size: 18px;
+      width: 60px;
+      display: flex;
+      justify-content: center;
+      animation: copilotMessageIn 0.25s ease-out;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #b8b9bb;
+      border-radius: 50%;
+      margin: 0 3px;
+      animation: blink 1.4s infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+
+    /* INPUT BAR */
+    #inputBar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      max-width: 90%;
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
+      border-radius: 28px;
+      padding: 10px 16px;
+      display: flex;
       gap: 12px;
-      background: rgba(15, 15, 22, 0.75);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 1000;
     }
 
     #input {
       flex: 1;
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(140, 90, 255, 0.4);
-      background: rgba(20, 20, 28, 0.85);
-      color: #e2e2e7;
-      font-size: 1rem;
+      border: none;
       outline: none;
+      font-size: 16px;
+      background: transparent;
     }
 
     #send {
-      padding: 14px 22px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, #6f3bff, #b06cff);
+      background: #0067c0;
       color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 20px;
       cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: 0.25s;
-      box-shadow: 0 0 12px #6f3bff88;
+      font-size: 15px;
+      transition: background 0.2s;
     }
 
     #send:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 18px #b06cffaa;
+      background: #0053a0;
     }
 
     /* SYSTEM PANEL */
     #systemPanel {
       position: fixed;
-      top: 12px;
-      right: 12px;
-      background: rgba(20, 20, 28, 0.75);
+      top: 80px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      z-index: 999;
-      box-shadow: 0 0 18px #00000088;
+      border: 1px solid #e0e0e0;
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       transition: top 0.35s ease;
+      z-index: 1000;
     }
 
     body.sidebar-collapsed #systemPanel {
-      top: 180px;
+      top: 240px;
     }
 
     #systemPanel .metric {
-      margin: 4px 0;
+      margin: 6px 0;
     }
   </style>
 </head>
 
 <body>
+
+  <div id="header">Nodevora</div>
 
   <button id="collapseBtn">☰</button>
 
@@ -271,22 +309,20 @@
   </div>
 
   <div id="sidebar">
-    <h2>Nodevora</h2>
-    <button id="newChatBtn">+ New Chat</button>
-    <div id="chatList"></div>
+    <div class="side-icon">💬</div>
+    <div class="side-icon">⭐</div>
+    <div class="side-icon">📁</div>
   </div>
 
   <div id="main">
-    <h1>Nodevora Console</h1>
     <div id="chat"></div>
-
-    <div class="input-area">
-      <input id="input" placeholder="Ask Nodevora anything..." />
-      <button id="send">Send</button>
-    </div>
   </div>
 
-  <!-- WEBLLM + CHAT + SYSTEM PANEL -->
+  <div id="inputBar">
+    <input id="input" placeholder="Ask Nodevora…" />
+    <button id="send">Send</button>
+  </div>
+
   <script type="module">
     import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
@@ -298,7 +334,18 @@
 
     let engine = null;
 
-    /* SIDEBAR COLLAPSE */
+    function renderMarkdown(text) {
+      text = text.replace(/^### (.*$)/gim, "<h3>$1</h3>");
+      text = text.replace(/^## (.*$)/gim, "<h2>$1</h2>");
+      text = text.replace(/^# (.*$)/gim, "<h1>$1</h1>");
+      text = text.replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>");
+      text = text.replace(/\*(.*?)\*/gim, "<i>$1</i>");
+      text = text.replace(/`([^`]+)`/gim, "<code>$1</code>");
+      text = text.replace(/```([\s\S]*?)```/gim, "<pre><code>$1</code></pre>");
+      text = text.replace(/\n$/gim, "<br>");
+      return text.trim();
+    }
+
     let collapsed = localStorage.getItem("sidebarCollapsed") === "true";
 
     function applySidebarState() {
@@ -319,7 +366,6 @@
       applySidebarState();
     };
 
-    /* MEMORY */
     let conversationMemory = [];
     try {
       const stored = localStorage.getItem("chat_memory");
@@ -365,10 +411,18 @@
       }
     }
 
-    function addMessage(role, text) {
+    function addMessage(role, text, isHTML = false) {
       const div = document.createElement("div");
       div.className = "msg " + (role === "you" ? "you" : role === "ai" ? "ai" : "system");
-      div.textContent = text;
+
+      if (role === "ai") {
+        div.innerHTML = renderMarkdown(text);
+      } else if (isHTML) {
+        div.innerHTML = text;
+      } else {
+        div.textContent = text;
+      }
+
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -379,9 +433,8 @@
       });
     }
 
-    /* INIT LLM */
     async function initLLM() {
-      addMessage("system", "Loading Qwen2.5‑1.5B‑Instruct…");
+      addMessage("system", "Loading Nodevora model…");
 
       const modelRecord = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
       const modelUrl = "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/";
@@ -399,13 +452,12 @@
           }
         );
 
-        addMessage("system", "Model loaded. Ready.");
+        addMessage("system", "Nodevora is ready.");
       } catch (err) {
         addMessage("system", "Model load failed: " + err.message);
       }
     }
 
-    /* SEARCH */
     async function webSearch(query) {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
@@ -425,7 +477,24 @@
       }
     }
 
-    /* SEND MESSAGE */
+    function showThinking() {
+      const div = document.createElement("div");
+      div.className = "thinking";
+      div.id = "thinkingBubble";
+      div.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function removeThinking() {
+      const t = document.getElementById("thinkingBubble");
+      if (t) t.remove();
+    }
+
     sendBtn.onclick = async () => {
       const text = input.value.trim();
       if (!text) return;
@@ -457,20 +526,23 @@
       if (searchContext) systemParts.push("Web search results:\n" + searchContext);
 
       const systemContent =
-        systemParts.join("\n\n") || "You are a helpful assistant.";
+        systemParts.join("\n\n") || "You are Nodevora, a helpful assistant.";
 
       const messages = [
         { role: "system", content: systemContent },
         ...conversationMemory
       ];
 
+      showThinking();
+
       const reply = await engine.chat.completions.create({
         messages,
         stream: false
       });
 
-      const aiText = reply.choices[0].message.content;
+      removeThinking();
 
+      const aiText = reply.choices[0].message.content;
       addMessage("ai", aiText);
 
       conversationMemory.push({ role: "assistant", content: aiText });
@@ -481,7 +553,6 @@
     loadChat();
     initLLM();
 
-    /* SYSTEM PANEL */
     function updateRAM() {
       if (performance.memory) {
         const used = performance.memory.usedJSHeapSize;
