@@ -27,25 +27,14 @@ function renderMarkdown(text) {
   if (!text) return "";
   let t = text;
 
-  // Code blocks
   t = t.replace(/```([\s\S]*?)```/gim, "<pre><code>$1</code></pre>");
-
-  // Headings
   t = t.replace(/^### (.*)$/gim, "<h3>$1</h3>");
   t = t.replace(/^## (.*)$/gim, "<h2>$1</h2>");
   t = t.replace(/^# (.*)$/gim, "<h1>$1</h1>");
-
-  // Bold / italic
   t = t.replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>");
   t = t.replace(/\*(.*?)\*/gim, "<i>$1</i>");
-
-  // Inline code
   t = t.replace(/`([^`]+)`/gim, "<code>$1</code>");
-
-  // Lists
   t = t.replace(/^\s*[-*] (.*)$/gim, "<ul><li>$1</li></ul>");
-
-  // Line breaks
   t = t.replace(/\n/g, "<br>");
 
   return t.trim();
@@ -59,8 +48,7 @@ let factMemory = [];
 try {
   const storedFacts = localStorage.getItem("fact_memory");
   if (storedFacts) factMemory = JSON.parse(storedFacts);
-} catch (e) {
-  console.warn("Failed to parse fact_memory, resetting.", e);
+} catch {
   factMemory = [];
 }
 
@@ -98,8 +86,7 @@ let currentChatId = null;
 try {
   chats = JSON.parse(localStorage.getItem("nodevora_chats") || "{}");
   currentChatId = localStorage.getItem("nodevora_current_chat") || null;
-} catch (e) {
-  console.warn("Failed to parse chats, resetting.", e);
+} catch {
   chats = {};
   currentChatId = null;
 }
@@ -126,8 +113,7 @@ function createNewChat() {
 function renderChatList() {
   chatListEl.innerHTML = "";
 
-  const chatArray = Object.values(chats);
-  chatArray.sort((a, b) => (a.id < b.id ? 1 : -1)); // newest first
+  const chatArray = Object.values(chats).sort((a, b) => b.id.localeCompare(a.id));
 
   chatArray.forEach(chat => {
     const div = document.createElement("div");
@@ -138,20 +124,18 @@ function renderChatList() {
       <div class="delete-chat">✕</div>
     `;
 
-    // Load chat on click
     div.onclick = (e) => {
       if (e.target.classList.contains("delete-chat")) return;
       loadChatById(chat.id);
     };
 
-    // Delete chat
     div.querySelector(".delete-chat").onclick = (e) => {
       e.stopPropagation();
       delete chats[chat.id];
 
       if (currentChatId === chat.id) {
-        const remainingIds = Object.keys(chats);
-        currentChatId = remainingIds[0] || null;
+        const ids = Object.keys(chats);
+        currentChatId = ids[0] || null;
       }
 
       saveChats();
@@ -168,7 +152,7 @@ function renderChatList() {
   });
 }
 
-let suppressChatSave = false;
+let suppressSave = false;
 
 function loadChatById(id) {
   if (!chats[id]) return;
@@ -176,11 +160,9 @@ function loadChatById(id) {
   saveChats();
 
   chatBox.innerHTML = "";
-  suppressChatSave = true;
-  chats[id].messages.forEach(m => {
-    addMessage(m.role, m.text);
-  });
-  suppressChatSave = false;
+  suppressSave = true;
+  chats[id].messages.forEach(m => addMessage(m.role, m.text));
+  suppressSave = false;
 
   scrollToBottom({ smooth: false });
 }
@@ -190,7 +172,6 @@ function loadChatById(id) {
 ========================= */
 
 function scrollToBottom(options = { smooth: true }) {
-  if (!main) return;
   main.scrollTo({
     top: main.scrollHeight,
     behavior: options.smooth ? "smooth" : "auto"
@@ -198,7 +179,6 @@ function scrollToBottom(options = { smooth: true }) {
 }
 
 function isNearBottom(threshold = 200) {
-  if (!main) return true;
   return main.scrollHeight - main.scrollTop - main.clientHeight < threshold;
 }
 
@@ -209,19 +189,15 @@ function isNearBottom(threshold = 200) {
 function addMessage(role, text) {
   const div = document.createElement("div");
 
-  if (role === "you") {
-    div.className = "msg you";
-  } else if (role === "ai") {
-    div.className = "msg ai";
-  } else {
-    div.className = "msg system";
-  }
+  div.className =
+    role === "you" ? "msg you" :
+    role === "ai" ? "msg ai" :
+    "msg system";
 
   div.innerHTML = renderMarkdown(text);
   chatBox.appendChild(div);
 
-  // Save into current chat
-  if (!suppressChatSave && currentChatId && chats[currentChatId]) {
+  if (!suppressSave && currentChatId && chats[currentChatId]) {
     chats[currentChatId].messages.push({ role, text });
 
     if (
@@ -235,9 +211,7 @@ function addMessage(role, text) {
     renderChatList();
   }
 
-  if (isNearBottom(220)) {
-    scrollToBottom({ smooth: true });
-  }
+  if (isNearBottom(220)) scrollToBottom({ smooth: true });
 }
 
 /* =========================
@@ -254,10 +228,7 @@ function showThinking() {
     <div class="dot"></div>
   `;
   chatBox.appendChild(div);
-
-  if (isNearBottom(220)) {
-    scrollToBottom({ smooth: true });
-  }
+  scrollToBottom({ smooth: true });
 }
 
 function removeThinking() {
@@ -329,7 +300,7 @@ async function testNetworkSpeed() {
     const duration = (performance.now() - start) / 1000;
     const mbps = (8 / duration).toFixed(1);
     netSpeedEl.textContent = mbps + " Mbps";
-  } catch (e) {
+  } catch {
     netSpeedEl.textContent = "--";
   }
 }
@@ -340,36 +311,29 @@ setInterval(testNetworkSpeed, 5000);
 ========================= */
 
 async function initLLM() {
-  addMessage("system", "Loading official Qwen2.5-1.5B-Instruct-q4f16_1 from Hugging Face...");
-
-  const modelRecord = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
-  const modelUrl = "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/";
+  addMessage("system", "Loading Qwen2.5‑1.5B‑Instruct…");
 
   try {
     engine = await CreateWebWorkerMLCEngine(
       new Worker("worker.js", { type: "module" }),
-      modelRecord,
+      "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
       {
-        model_url: modelUrl,
+        model_url: "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/",
         initProgressCallback: (report) => {
-          const percent = Math.round(report.progress * 100);
-          addMessage(
-            "system",
-            `${report.text || "Downloading model..."} (${percent}%)`
-          );
+          const pct = Math.round(report.progress * 100);
+          addMessage("system", `${report.text || "Loading…"} (${pct}%)`);
         }
       }
     );
 
-    addMessage("system", "Qwen2.5-1.5B loaded successfully! You can start chatting.");
+    addMessage("system", "Model loaded. Ready.");
   } catch (err) {
-    addMessage("system", "Failed to load model: " + err.message);
-    console.error("Load error:", err);
+    addMessage("system", "Model load failed: " + err.message);
   }
 }
 
 /* =========================
-   INTERNET SEARCH (Azure SWA)
+   INTERNET SEARCH
 ========================= */
 
 async function webSearch(query) {
@@ -395,45 +359,37 @@ async function webSearch(query) {
    SCROLL-TO-BOTTOM BUTTON
 ========================= */
 
-if (scrollBtn && main) {
-  scrollBtn.addEventListener("click", () => {
-    scrollToBottom({ smooth: true });
-  });
+scrollBtn.addEventListener("click", () => {
+  scrollToBottom({ smooth: true });
+});
 
-  main.addEventListener("scroll", () => {
-    const nearBottom = isNearBottom(120);
-    if (nearBottom) {
-      scrollBtn.classList.remove("show");
-    } else {
-      scrollBtn.classList.add("show");
-    }
-  });
-}
+main.addEventListener("scroll", () => {
+  if (isNearBottom(120)) {
+    scrollBtn.classList.remove("show");
+  } else {
+    scrollBtn.classList.add("show");
+  }
+});
 
 /* =========================
-   BUILD LLM MESSAGES FROM CHAT
+   BUILD LLM MESSAGES
 ========================= */
 
 function buildLLMMessages(systemContent) {
-  const chat = currentChatId ? chats[currentChatId] : null;
+  const chat = chats[currentChatId];
   const history = chat ? chat.messages : [];
 
   const llmHistory = history
     .filter(m => m.role === "you" || m.role === "ai")
-    .map(m => {
-      if (m.role === "you") {
-        return { role: "user", content: m.text };
-      } else {
-        return { role: "assistant", content: m.text };
-      }
-    });
+    .map(m => ({
+      role: m.role === "you" ? "user" : "assistant",
+      content: m.text
+    }));
 
-  const messages = [
-    { role: "system", content: systemContent || "You are Nodevora, a helpful assistant." },
+  return [
+    { role: "system", content: systemContent },
     ...llmHistory
   ];
-
-  return messages;
 }
 
 /* =========================
@@ -489,8 +445,7 @@ sendBtn.onclick = async () => {
     addMessage("ai", aiText);
   } catch (e) {
     removeThinking();
-    addMessage("system", "Error generating response: " + e.message);
-    console.error(e);
+    addMessage("system", "Error: " + e.message);
   }
 };
 
@@ -508,6 +463,8 @@ input.addEventListener("keydown", (e) => {
 /* =========================
    STARTUP
 ========================= */
+
+newChatBtn.onclick = createNewChat;   // <-- FIXED
 
 renderChatList();
 
