@@ -13,6 +13,10 @@ const ramUsageEl = document.getElementById("ramUsage");
 const netSpeedEl = document.getElementById("netSpeed");
 const netStatusEl = document.getElementById("netStatus");
 
+// NEW: main scroll container + scroll-to-bottom button
+const main = document.getElementById("main");
+const scrollBtn = document.getElementById("scrollDownBtn");
+
 let engine = null;
 
 /* =========================
@@ -119,6 +123,23 @@ function trimConversation() {
 }
 
 /* =========================
+   SCROLL HELPERS
+========================= */
+
+function scrollToBottom(options = { smooth: true }) {
+  if (!main) return;
+  main.scrollTo({
+    top: main.scrollHeight,
+    behavior: options.smooth ? "smooth" : "auto"
+  });
+}
+
+function isNearBottom(threshold = 200) {
+  if (!main) return true;
+  return main.scrollHeight - main.scrollTop - main.clientHeight < threshold;
+}
+
+/* =========================
    UI: COPILOT-STYLE BUBBLES
 ========================= */
 
@@ -135,7 +156,11 @@ function addMessage(role, text) {
 
   div.innerHTML = renderMarkdown(text);
   chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+
+  // Only auto-scroll if user is already near bottom
+  if (isNearBottom(220)) {
+    scrollToBottom({ smooth: true });
+  }
 }
 
 /* =========================
@@ -152,7 +177,10 @@ function showThinking() {
     <div class="dot"></div>
   `;
   chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+
+  if (isNearBottom(220)) {
+    scrollToBottom({ smooth: true });
+  }
 }
 
 function removeThinking() {
@@ -168,6 +196,9 @@ function loadChat() {
   conversationMemory.forEach(m => {
     addMessage(m.role === "user" ? "you" : "ai", m.content);
   });
+
+  // After loading history, jump to bottom without animation
+  scrollToBottom({ smooth: false });
 }
 
 /* =========================
@@ -297,6 +328,27 @@ async function webSearch(query) {
 }
 
 /* =========================
+   SCROLL-TO-BOTTOM BUTTON
+========================= */
+
+if (scrollBtn && main) {
+  // Click → scroll to bottom
+  scrollBtn.addEventListener("click", () => {
+    scrollToBottom({ smooth: true });
+  });
+
+  // Show/hide depending on scroll position
+  main.addEventListener("scroll", () => {
+    const nearBottom = isNearBottom(120);
+    if (nearBottom) {
+      scrollBtn.classList.remove("show");
+    } else {
+      scrollBtn.classList.add("show");
+    }
+  });
+}
+
+/* =========================
    SEND MESSAGE
 ========================= */
 
@@ -362,9 +414,19 @@ sendBtn.onclick = async () => {
 };
 
 /* =========================
+   ENTER KEY HANDLING
+========================= */
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendBtn.click();
+  }
+});
+
+/* =========================
    START
 ========================= */
 
 loadChat();
 initLLM();
-
