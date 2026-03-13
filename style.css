@@ -7,8 +7,8 @@
 
 body {
   font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(to bottom, #f6f7f9, #ffffff);
-  color: #1a1a1a;
+  background: #0d0f12;
+  color: #e6e6e6;
   height: 100vh;
   display: flex;
   overflow: hidden;
@@ -21,16 +21,16 @@ body {
   left: 0;
   width: 100%;
   height: 64px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid #e5e5e5;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   font-size: 20px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #f0f0f0;
 }
 
 /* COLLAPSE BUTTON */
@@ -39,17 +39,18 @@ body {
   top: 14px;
   left: 14px;
   z-index: 1100;
-  background: #ffffff;
-  border: 1px solid #d0d0d0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
   font-size: 20px;
+  color: #e6e6e6;
   transition: background 0.2s;
 }
 
 #collapseBtn:hover {
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* SIDEBAR */
@@ -59,9 +60,9 @@ body {
   left: 0;
   width: 72px;
   height: calc(100vh - 64px);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid #e5e5e5;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 20px;
   display: flex;
   flex-direction: column;
@@ -81,28 +82,29 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #dcdcdc;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 20px;
+  color: #e6e6e6;
   transition: background 0.2s;
 }
 
 .side-icon:hover {
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.16);
 }
 
-/* MAIN */
+/* MAIN SCROLL AREA */
 #main {
   flex: 1;
   margin-left: 72px;
   margin-top: 64px;
   height: calc(100vh - 64px);
   overflow-y: auto;
-  padding: 40px 0 140px; /* FIX: ensures last message stays above input bar */
+  padding: 40px 0 140px;
   transition: margin-left 0.35s ease;
 }
 
@@ -133,26 +135,23 @@ body.sidebar-collapsed #main {
   max-width: 80%;
   line-height: 1.5;
   font-size: 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   animation: copilotMessageIn 0.28s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .you {
   align-self: flex-end;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.10);
 }
 
 .ai {
   align-self: flex-start;
-  background: #f3f4f6;
-  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .system {
   align-self: center;
-  background: #eef0f3;
-  border: 1px solid #dcdcdc;
+  background: rgba(255, 255, 255, 0.04);
   font-size: 14px;
   opacity: 0.8;
 }
@@ -163,6 +162,7 @@ body.sidebar-collapsed #main {
 .msg.ai h3 {
   font-weight: 600;
   margin: 12px 0 6px;
+  color: #ffffff;
 }
 
 .msg.ai p {
@@ -174,7 +174,7 @@ body.sidebar-collapsed #main {
 }
 
 .msg.ai code {
-  background: #e8e9ec;
+  background: rgba(255, 255, 255, 0.12);
   padding: 2px 6px;
   border-radius: 6px;
   font-family: Consolas, monospace;
@@ -182,20 +182,20 @@ body.sidebar-collapsed #main {
 }
 
 .msg.ai pre {
-  background: #f1f2f4;
+  background: rgba(255, 255, 255, 0.08);
   padding: 12px;
   border-radius: 12px;
   overflow-x: auto;
   font-family: Consolas, monospace;
   font-size: 14px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* THINKING DOTS */
 .thinking {
   align-self: flex-start;
-  background: #f3f4f6;
-  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 14px 20px;
   border-radius: 22px;
   font-size: 18px;
@@ -208,7 +208,7 @@ body.sidebar-collapsed #main {
 .dot {
   width: 8px;
   height: 8px;
-  background: #b8b9bb;
+  background: #9aa0a6;
   border-radius: 50%;
   margin: 0 3px;
   animation: blink 1.4s infinite;
@@ -231,13 +231,13 @@ body.sidebar-collapsed #main {
   transform: translateX(-50%);
   width: 900px;
   max-width: 90%;
-  background: #ffffff;
-  border: 1px solid #dcdcdc;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 28px;
   padding: 10px 16px;
   display: flex;
   gap: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   z-index: 1000;
 }
 
@@ -247,11 +247,12 @@ body.sidebar-collapsed #main {
   outline: none;
   font-size: 16px;
   background: transparent;
+  color: #e6e6e6;
 }
 
 #send {
-  background: #0067c0;
-  color: white;
+  background: #4da3ff;
+  color: #0d0f12;
   border: none;
   padding: 10px 18px;
   border-radius: 20px;
@@ -261,7 +262,7 @@ body.sidebar-collapsed #main {
 }
 
 #send:hover {
-  background: #0053a0;
+  background: #1e8cff;
 }
 
 /* SYSTEM PANEL */
@@ -269,13 +270,13 @@ body.sidebar-collapsed #main {
   position: fixed;
   top: 80px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 14px 18px;
   border-radius: 16px;
   font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   transition: top 0.35s ease;
   z-index: 1000;
 }
@@ -288,3 +289,35 @@ body.sidebar-collapsed #systemPanel {
   margin: 6px 0;
 }
 
+/* SCROLL-TO-BOTTOM BUTTON */
+#scrollDownBtn {
+  position: fixed;
+  bottom: 110px;
+  right: 40px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  cursor: pointer;
+  color: #e6e6e6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 1200;
+}
+
+#scrollDownBtn.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#scrollDownBtn:hover {
+  transform: translateY(-4px);
+}
