@@ -42,7 +42,7 @@ function renderMarkdown(text) {
 }
 
 /* ============================================================
-   MEMORY STORAGE (FACTS)
+   MEMORY STORAGE
 ============================================================ */
 let factMemory = [];
 try {
@@ -279,14 +279,27 @@ async function testNetworkSpeed() {
 setInterval(testNetworkSpeed, 5000);
 
 /* ============================================================
-   GPU DETECTION
+   STRICT GPU DETECTION
 ============================================================ */
 async function detectGPU() {
   try {
-    const adapter = await navigator.gpu?.requestAdapter();
-    gpuNameEl.textContent = adapter ? adapter.name : "No WebGPU";
-  } catch {
-    gpuNameEl.textContent = "Unknown";
+    if (!("gpu" in navigator)) {
+      gpuNameEl.textContent = "WebGPU not supported";
+      return;
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+
+    if (!adapter) {
+      gpuNameEl.textContent = "WebGPU unavailable";
+      return;
+    }
+
+    gpuNameEl.textContent = adapter.name || "Unknown GPU";
+
+  } catch (err) {
+    gpuNameEl.textContent = "Detection error";
+    console.error("GPU detection failed:", err);
   }
 }
 
