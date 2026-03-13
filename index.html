@@ -5,26 +5,35 @@
   <title>Nodevora</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <div id="header">
-    <button id="collapseBtn">☰</button>
+  <!-- ============================================================
+       HEADER BAR
+       Fixed at top, contains collapse button + app title
+  ============================================================ -->
+  <header id="header">
+    <button id="collapseBtn" aria-label="Toggle sidebar">☰</button>
     <div id="headerTitle">Nodevora</div>
-  </div>
+  </header>
 
-  <!-- SIDEBAR (Chat Manager) -->
-  <div id="sidebar">
+  <!-- ============================================================
+       SIDEBAR — CHAT MANAGER
+       Collapsible, contains New Chat + Chat List
+  ============================================================ -->
+  <aside id="sidebar" aria-label="Chat history">
     <button id="newChatBtn" class="side-icon">＋ New Chat</button>
+    <nav id="chatList"></nav>
+  </aside>
 
-    <div id="chatList"></div>
-  </div>
-
-  <!-- SYSTEM PANEL -->
-  <div id="systemPanel">
+  <!-- ============================================================
+       SYSTEM PANEL
+       Shows RAM, network, model, GPU, and LLM status
+  ============================================================ -->
+  <section id="systemPanel" aria-label="System status">
     <div class="metric"><strong>RAM:</strong> <span id="ramUsage">--%</span></div>
     <div class="metric"><strong>Net:</strong> <span id="netSpeed">-- Mbps</span></div>
     <div class="metric"><strong>Status:</strong> <span id="netStatus">Offline</span></div>
@@ -32,23 +41,34 @@
     <div class="metric"><strong>Model:</strong> <span id="modelName">--</span></div>
     <div class="metric"><strong>GPU:</strong> <span id="gpuName">--</span></div>
     <div class="metric"><strong>LLM:</strong> <span id="llmStatus">Loading…</span></div>
-  </div>
+  </section>
 
-  <!-- MAIN CHAT AREA -->
-  <div id="main">
-    <div id="chat"></div>
-  </div>
+  <!-- ============================================================
+       MAIN CHAT AREA
+       Scrollable container for messages
+  ============================================================ -->
+  <main id="main">
+    <div id="chat" aria-live="polite"></div>
+  </main>
 
-  <!-- INPUT BAR -->
-  <div id="inputBar">
-    <input id="input" placeholder="Ask Nodevora…" />
-    <button id="send">Send</button>
-  </div>
+  <!-- ============================================================
+       INPUT BAR
+       Fixed at bottom, contains text input + send button
+  ============================================================ -->
+  <footer id="inputBar">
+    <input id="input" placeholder="Ask Nodevora…" aria-label="Message input" />
+    <button id="send" aria-label="Send message">Send</button>
+  </footer>
 
-  <!-- SCROLL-TO-BOTTOM BUTTON -->
-  <div id="scrollDownBtn">↓</div>
+  <!-- ============================================================
+       SCROLL-TO-BOTTOM BUTTON
+       Appears when user scrolls up
+  ============================================================ -->
+  <button id="scrollDownBtn" aria-label="Scroll to bottom">↓</button>
 
-  <!-- MAIN JS -->
+  <!-- ============================================================
+       MAIN JAVASCRIPT
+  ============================================================ -->
   <script type="module" src="main.js"></script>
 
 </body>
