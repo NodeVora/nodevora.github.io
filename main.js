@@ -1,9 +1,8 @@
 import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
-/* =========================
+/* ============================================================
    DOM REFERENCES
-========================= */
-
+============================================================ */
 const chatBox = document.getElementById("chat");
 const input = document.getElementById("input");
 const sendBtn = document.getElementById("send");
@@ -12,6 +11,9 @@ const collapseBtn = document.getElementById("collapseBtn");
 const ramUsageEl = document.getElementById("ramUsage");
 const netSpeedEl = document.getElementById("netSpeed");
 const netStatusEl = document.getElementById("netStatus");
+const modelNameEl = document.getElementById("modelName");
+const gpuNameEl = document.getElementById("gpuName");
+const llmStatusEl = document.getElementById("llmStatus");
 const main = document.getElementById("main");
 const scrollBtn = document.getElementById("scrollDownBtn");
 const chatListEl = document.getElementById("chatList");
@@ -19,10 +21,9 @@ const newChatBtn = document.getElementById("newChatBtn");
 
 let engine = null;
 
-/* =========================
+/* ============================================================
    MARKDOWN RENDERER
-========================= */
-
+============================================================ */
 function renderMarkdown(text) {
   if (!text) return "";
   let t = text;
@@ -40,14 +41,13 @@ function renderMarkdown(text) {
   return t.trim();
 }
 
-/* =========================
+/* ============================================================
    MEMORY STORAGE (FACTS)
-========================= */
-
+============================================================ */
 let factMemory = [];
 try {
-  const storedFacts = localStorage.getItem("fact_memory");
-  if (storedFacts) factMemory = JSON.parse(storedFacts);
+  const stored = localStorage.getItem("fact_memory");
+  if (stored) factMemory = JSON.parse(stored);
 } catch {
   factMemory = [];
 }
@@ -76,10 +76,9 @@ function getRelevantFacts(query, topK = 5) {
   return scored.filter(s => s.score > 0).slice(0, topK).map(s => s.fact);
 }
 
-/* =========================
-   CHAT MANAGER (LOCAL STORAGE)
-========================= */
-
+/* ============================================================
+   CHAT MANAGER
+============================================================ */
 let chats = {};
 let currentChatId = null;
 
@@ -98,11 +97,7 @@ function saveChats() {
 
 function createNewChat() {
   const id = "chat_" + Date.now();
-  chats[id] = {
-    id,
-    title: "New Chat",
-    messages: []
-  };
+  chats[id] = { id, title: "New Chat", messages: [] };
   currentChatId = id;
   saveChats();
   renderChatList();
@@ -113,23 +108,23 @@ function createNewChat() {
 function renderChatList() {
   chatListEl.innerHTML = "";
 
-  const chatArray = Object.values(chats).sort((a, b) => b.id.localeCompare(a.id));
+  const list = Object.values(chats).sort((a, b) => b.id.localeCompare(a.id));
 
-  chatArray.forEach(chat => {
+  list.forEach(chat => {
     const div = document.createElement("div");
     div.className = "chat-entry";
 
     div.innerHTML = `
-      <div class="chat-entry-title">${chat.title || "Chat"}</div>
+      <div class="chat-entry-title">${chat.title}</div>
       <div class="delete-chat">✕</div>
     `;
 
-    div.onclick = (e) => {
+    div.onclick = e => {
       if (e.target.classList.contains("delete-chat")) return;
-      loadChatById(chat.id);
+      loadChat(chat.id);
     };
 
-    div.querySelector(".delete-chat").onclick = (e) => {
+    div.querySelector(".delete-chat").onclick = e => {
       e.stopPropagation();
       delete chats[chat.id];
 
@@ -141,11 +136,8 @@ function renderChatList() {
       saveChats();
       renderChatList();
 
-      if (currentChatId && chats[currentChatId]) {
-        loadChatById(currentChatId);
-      } else {
-        chatBox.innerHTML = "";
-      }
+      if (currentChatId) loadChat(currentChatId);
+      else chatBox.innerHTML = "";
     };
 
     chatListEl.appendChild(div);
@@ -154,7 +146,7 @@ function renderChatList() {
 
 let suppressSave = false;
 
-function loadChatById(id) {
+function loadChat(id) {
   if (!chats[id]) return;
   currentChatId = id;
   saveChats();
@@ -167,14 +159,13 @@ function loadChatById(id) {
   scrollToBottom({ smooth: false });
 }
 
-/* =========================
+/* ============================================================
    SCROLL HELPERS
-========================= */
-
-function scrollToBottom(options = { smooth: true }) {
+============================================================ */
+function scrollToBottom({ smooth = true } = {}) {
   main.scrollTo({
     top: main.scrollHeight,
-    behavior: options.smooth ? "smooth" : "auto"
+    behavior: smooth ? "smooth" : "auto"
   });
 }
 
@@ -182,17 +173,13 @@ function isNearBottom(threshold = 200) {
   return main.scrollHeight - main.scrollTop - main.clientHeight < threshold;
 }
 
-/* =========================
-   UI: MESSAGE BUBBLES
-========================= */
-
+/* ============================================================
+   MESSAGE BUBBLES
+============================================================ */
 function addMessage(role, text) {
   const div = document.createElement("div");
-
-  div.className =
-    role === "you" ? "msg you" :
-    role === "ai" ? "msg ai" :
-    "msg system";
+  div.className = role === "you" ? "msg you" :
+                  role === "ai" ? "msg ai" : "msg system";
 
   div.innerHTML = renderMarkdown(text);
   chatBox.appendChild(div);
@@ -200,10 +187,7 @@ function addMessage(role, text) {
   if (!suppressSave && currentChatId && chats[currentChatId]) {
     chats[currentChatId].messages.push({ role, text });
 
-    if (
-      role === "you" &&
-      (!chats[currentChatId].title || chats[currentChatId].title === "New Chat")
-    ) {
+    if (role === "you" && chats[currentChatId].title === "New Chat") {
       chats[currentChatId].title = text.slice(0, 30) || "Chat";
     }
 
@@ -211,13 +195,12 @@ function addMessage(role, text) {
     renderChatList();
   }
 
-  if (isNearBottom(220)) scrollToBottom({ smooth: true });
+  if (isNearBottom()) scrollToBottom();
 }
 
-/* =========================
+/* ============================================================
    THINKING DOTS
-========================= */
-
+============================================================ */
 function showThinking() {
   const div = document.createElement("div");
   div.className = "thinking";
@@ -228,7 +211,7 @@ function showThinking() {
     <div class="dot"></div>
   `;
   chatBox.appendChild(div);
-  scrollToBottom({ smooth: true });
+  scrollToBottom();
 }
 
 function removeThinking() {
@@ -236,10 +219,9 @@ function removeThinking() {
   if (t) t.remove();
 }
 
-/* =========================
+/* ============================================================
    SIDEBAR COLLAPSE
-========================= */
-
+============================================================ */
 let collapsed = localStorage.getItem("sidebarCollapsed") === "true";
 
 function applySidebarState() {
@@ -260,26 +242,23 @@ collapseBtn.onclick = () => {
   applySidebarState();
 };
 
-/* =========================
-   SYSTEM PANEL: RAM
-========================= */
-
+/* ============================================================
+   SYSTEM PANEL — RAM
+============================================================ */
 function updateRAM() {
   if (performance && performance.memory) {
     const used = performance.memory.usedJSHeapSize;
     const total = performance.memory.jsHeapSizeLimit;
-    const pct = ((used / total) * 100).toFixed(1);
-    ramUsageEl.textContent = pct + "%";
+    ramUsageEl.textContent = ((used / total) * 100).toFixed(1) + "%";
   } else {
-    ramUsageEl.textContent = "--";
+    ramUsageEl.textContent = "--%";
   }
 }
 setInterval(updateRAM, 2000);
 
-/* =========================
-   SYSTEM PANEL: NETWORK STATUS
-========================= */
-
+/* ============================================================
+   SYSTEM PANEL — NETWORK
+============================================================ */
 function updateNetworkStatus() {
   netStatusEl.textContent = navigator.onLine ? "Online" : "Offline";
 }
@@ -287,55 +266,63 @@ window.addEventListener("online", updateNetworkStatus);
 window.addEventListener("offline", updateNetworkStatus);
 updateNetworkStatus();
 
-/* =========================
-   SYSTEM PANEL: SPEED TEST
-========================= */
-
 async function testNetworkSpeed() {
   const start = performance.now();
   try {
-    await fetch("https://speed.cloudflare.com/__down?bytes=1000000", {
-      cache: "no-store"
-    });
-    const duration = (performance.now() - start) / 1000;
-    const mbps = (8 / duration).toFixed(1);
-    netSpeedEl.textContent = mbps + " Mbps";
+    await fetch("https://speed.cloudflare.com/__down?bytes=1000000", { cache: "no-store" });
+    const sec = (performance.now() - start) / 1000;
+    netSpeedEl.textContent = (8 / sec).toFixed(1) + " Mbps";
   } catch {
-    netSpeedEl.textContent = "--";
+    netSpeedEl.textContent = "-- Mbps";
   }
 }
 setInterval(testNetworkSpeed, 5000);
 
-/* =========================
-   INIT MODEL - Qwen2.5-1.5B
-========================= */
+/* ============================================================
+   GPU DETECTION
+============================================================ */
+async function detectGPU() {
+  try {
+    const adapter = await navigator.gpu?.requestAdapter();
+    gpuNameEl.textContent = adapter ? adapter.name : "No WebGPU";
+  } catch {
+    gpuNameEl.textContent = "Unknown";
+  }
+}
 
+/* ============================================================
+   INIT MODEL — CLEAN VERSION
+============================================================ */
 async function initLLM() {
-  addMessage("system", "Loading Qwen2.5‑1.5B‑Instruct…");
+  const model = "Qwen2.5‑1.5B q4f16_1";
+  const record = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
+  const url = "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/";
+
+  modelNameEl.textContent = model;
+  llmStatusEl.textContent = "Loading…";
 
   try {
     engine = await CreateWebWorkerMLCEngine(
       new Worker("worker.js", { type: "module" }),
-      "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+      record,
       {
-        model_url: "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/",
-        initProgressCallback: (report) => {
-          const pct = Math.round(report.progress * 100);
-          addMessage("system", `${report.text || "Loading…"} (${pct}%)`);
+        model_url: url,
+        initProgressCallback: (r) => {
+          llmStatusEl.textContent = `Loading ${Math.round(r.progress * 100)}%`;
         }
       }
     );
 
-    addMessage("system", "Model loaded. Ready.");
+    llmStatusEl.textContent = "Ready";
   } catch (err) {
-    addMessage("system", "Model load failed: " + err.message);
+    llmStatusEl.textContent = "Error";
+    console.error(err);
   }
 }
 
-/* =========================
-   INTERNET SEARCH
-========================= */
-
+/* ============================================================
+   WEB SEARCH
+============================================================ */
 async function webSearch(query) {
   try {
     const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
@@ -345,36 +332,26 @@ async function webSearch(query) {
     if (!Array.isArray(data) || data.length === 0) return "No results.";
 
     return data
-      .map(
-        (r, i) =>
-          `${i + 1}. ${r.title}\n${r.url}\n${r.snippet || ""}`
-      )
+      .map((r, i) => `${i + 1}. ${r.title}\n${r.url}\n${r.snippet || ""}`)
       .join("\n\n");
   } catch (e) {
     return "Search failed: " + e.message;
   }
 }
 
-/* =========================
-   SCROLL-TO-BOTTOM BUTTON
-========================= */
-
-scrollBtn.addEventListener("click", () => {
-  scrollToBottom({ smooth: true });
-});
+/* ============================================================
+   SCROLL BUTTON
+============================================================ */
+scrollBtn.onclick = () => scrollToBottom();
 
 main.addEventListener("scroll", () => {
-  if (isNearBottom(120)) {
-    scrollBtn.classList.remove("show");
-  } else {
-    scrollBtn.classList.add("show");
-  }
+  if (isNearBottom(120)) scrollBtn.classList.remove("show");
+  else scrollBtn.classList.add("show");
 });
 
-/* =========================
-   BUILD LLM MESSAGES
-========================= */
-
+/* ============================================================
+   LLM MESSAGE BUILDER
+============================================================ */
 function buildLLMMessages(systemContent) {
   const chat = chats[currentChatId];
   const history = chat ? chat.messages : [];
@@ -392,42 +369,33 @@ function buildLLMMessages(systemContent) {
   ];
 }
 
-/* =========================
+/* ============================================================
    SEND MESSAGE
-========================= */
-
+============================================================ */
 sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
-  if (!currentChatId || !chats[currentChatId]) {
-    createNewChat();
-  }
+  if (!currentChatId) createNewChat();
 
   addMessage("you", text);
   input.value = "";
 
   addFact(text);
 
-  const relevantFacts = getRelevantFacts(text);
-  const memoryPrompt = relevantFacts.length
-    ? "Relevant memory:\n" + relevantFacts.join("\n")
-    : "";
+  const facts = getRelevantFacts(text);
+  const memoryPrompt = facts.length ? "Relevant memory:\n" + facts.join("\n") : "";
 
   let searchContext = "";
-
   if (text.toLowerCase().startsWith("search ")) {
-    const q = text.slice(7).trim() || text;
-    addMessage("system", `Searching: ${q}`);
+    const q = text.slice(7).trim();
     searchContext = await webSearch(q);
   }
 
-  const systemParts = [];
-  if (memoryPrompt) systemParts.push(memoryPrompt);
-  if (searchContext) systemParts.push("Web search results:\n" + searchContext);
-
   const systemContent =
-    systemParts.join("\n\n") || "You are Nodevora, a helpful assistant.";
+    [memoryPrompt, searchContext ? "Web search:\n" + searchContext : ""]
+      .filter(Boolean)
+      .join("\n\n") || "You are Nodevora, a helpful assistant.";
 
   const messages = buildLLMMessages(systemContent);
 
@@ -439,39 +407,33 @@ sendBtn.onclick = async () => {
       stream: false
     });
 
-    const aiText = reply.choices[0].message.content;
-
     removeThinking();
-    addMessage("ai", aiText);
+    addMessage("ai", reply.choices[0].message.content);
   } catch (e) {
     removeThinking();
     addMessage("system", "Error: " + e.message);
   }
 };
 
-/* =========================
-   ENTER KEY HANDLING
-========================= */
-
-input.addEventListener("keydown", (e) => {
+/* ============================================================
+   ENTER KEY
+============================================================ */
+input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendBtn.click();
   }
 });
 
-/* =========================
+/* ============================================================
    STARTUP
-========================= */
-
-newChatBtn.onclick = createNewChat;   // <-- FIXED
+============================================================ */
+newChatBtn.onclick = createNewChat;
 
 renderChatList();
+detectGPU();
 
-if (currentChatId && chats[currentChatId]) {
-  loadChatById(currentChatId);
-} else {
-  createNewChat();
-}
+if (currentChatId) loadChat(currentChatId);
+else createNewChat();
 
 initLLM();
