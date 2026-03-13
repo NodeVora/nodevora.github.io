@@ -34,12 +34,7 @@ body {
   z-index: 1000;
 }
 
-#headerTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: #f0f0f0;
-}
-
+/* Collapse button */
 #collapseBtn {
   position: absolute;
   left: 14px;
@@ -56,6 +51,48 @@ body {
 
 #collapseBtn:hover {
   background: rgba(255, 255, 255, 0.16);
+}
+
+/* ============================================================
+   CENTERED NODEVORA LOGO (SEXY FUTURISTIC STYLE)
+============================================================ */
+#logoContainer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#nodevoraLogo {
+  font-family: "Segoe UI", "Exo 2", "Orbitron", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  background: linear-gradient(90deg, #7acbff, #b0e0ff, #7acbff);
+  -webkit-background-clip: text;
+  color: transparent;
+
+  filter:
+    drop-shadow(0 0 6px rgba(120, 180, 255, 0.35))
+    drop-shadow(0 0 18px rgba(120, 180, 255, 0.15));
+
+  opacity: 0.92;
+  transition: opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+  pointer-events: auto;
+}
+
+#nodevoraLogo:hover {
+  opacity: 1;
+  transform: scale(1.05);
+  filter:
+    drop-shadow(0 0 10px rgba(140, 200, 255, 0.55))
+    drop-shadow(0 0 22px rgba(140, 200, 255, 0.25));
 }
 
 /* ============================================================
