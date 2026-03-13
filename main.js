@@ -12,10 +12,10 @@ const collapseBtn = document.getElementById("collapseBtn");
 const ramUsageEl = document.getElementById("ramUsage");
 const netSpeedEl = document.getElementById("netSpeed");
 const netStatusEl = document.getElementById("netStatus");
-
-// NEW: main scroll container + scroll-to-bottom button
 const main = document.getElementById("main");
 const scrollBtn = document.getElementById("scrollDownBtn");
+const chatListEl = document.getElementById("chatList");
+const newChatBtn = document.getElementById("newChatBtn");
 
 let engine = null;
 
@@ -52,17 +52,8 @@ function renderMarkdown(text) {
 }
 
 /* =========================
-   MEMORY STORAGE (SAFE)
+   MEMORY STORAGE (FACTS)
 ========================= */
-
-let conversationMemory = [];
-try {
-  const stored = localStorage.getItem("chat_memory");
-  if (stored) conversationMemory = JSON.parse(stored);
-} catch (e) {
-  console.warn("Failed to parse chat_memory, resetting.", e);
-  conversationMemory = [];
-}
 
 let factMemory = [];
 try {
@@ -73,31 +64,16 @@ try {
   factMemory = [];
 }
 
-const MAX_CONVERSATION = 20;
-
-/* =========================
-   SAVE MEMORY
-========================= */
-
-function saveMemory() {
-  localStorage.setItem("chat_memory", JSON.stringify(conversationMemory));
+function saveFacts() {
   localStorage.setItem("fact_memory", JSON.stringify(factMemory));
 }
-
-/* =========================
-   ADD FACTS
-========================= */
 
 function addFact(text) {
   if (!factMemory.includes(text)) {
     factMemory.push(text);
-    saveMemory();
+    saveFacts();
   }
 }
-
-/* =========================
-   GET RELEVANT FACTS
-========================= */
 
 function getRelevantFacts(query, topK = 5) {
   const keywords = query.toLowerCase().split(/\s+/);
@@ -113,13 +89,100 @@ function getRelevantFacts(query, topK = 5) {
 }
 
 /* =========================
-   TRIM CONVERSATION
+   CHAT MANAGER (LOCAL STORAGE)
 ========================= */
 
-function trimConversation() {
-  if (conversationMemory.length > MAX_CONVERSATION) {
-    conversationMemory = conversationMemory.slice(-MAX_CONVERSATION);
-  }
+let chats = {};
+let currentChatId = null;
+
+try {
+  chats = JSON.parse(localStorage.getItem("nodevora_chats") || "{}");
+  currentChatId = localStorage.getItem("nodevora_current_chat") || null;
+} catch (e) {
+  console.warn("Failed to parse chats, resetting.", e);
+  chats = {};
+  currentChatId = null;
+}
+
+function saveChats() {
+  localStorage.setItem("nodevora_chats", JSON.stringify(chats));
+  localStorage.setItem("nodevora_current_chat", currentChatId || "");
+}
+
+function createNewChat() {
+  const id = "chat_" + Date.now();
+  chats[id] = {
+    id,
+    title: "New Chat",
+    messages: []
+  };
+  currentChatId = id;
+  saveChats();
+  renderChatList();
+  chatBox.innerHTML = "";
+  scrollToBottom({ smooth: false });
+}
+
+function renderChatList() {
+  chatListEl.innerHTML = "";
+
+  const chatArray = Object.values(chats);
+  chatArray.sort((a, b) => (a.id < b.id ? 1 : -1)); // newest first
+
+  chatArray.forEach(chat => {
+    const div = document.createElement("div");
+    div.className = "chat-entry";
+
+    div.innerHTML = `
+      <div class="chat-entry-title">${chat.title || "Chat"}</div>
+      <div class="delete-chat">✕</div>
+    `;
+
+    // Load chat on click
+    div.onclick = (e) => {
+      if (e.target.classList.contains("delete-chat")) return;
+      loadChatById(chat.id);
+    };
+
+    // Delete chat
+    div.querySelector(".delete-chat").onclick = (e) => {
+      e.stopPropagation();
+      delete chats[chat.id];
+
+      if (currentChatId === chat.id) {
+        const remainingIds = Object.keys(chats);
+        currentChatId = remainingIds[0] || null;
+      }
+
+      saveChats();
+      renderChatList();
+
+      if (currentChatId && chats[currentChatId]) {
+        loadChatById(currentChatId);
+      } else {
+        chatBox.innerHTML = "";
+      }
+    };
+
+    chatListEl.appendChild(div);
+  });
+}
+
+let suppressChatSave = false;
+
+function loadChatById(id) {
+  if (!chats[id]) return;
+  currentChatId = id;
+  saveChats();
+
+  chatBox.innerHTML = "";
+  suppressChatSave = true;
+  chats[id].messages.forEach(m => {
+    addMessage(m.role, m.text);
+  });
+  suppressChatSave = false;
+
+  scrollToBottom({ smooth: false });
 }
 
 /* =========================
@@ -140,7 +203,7 @@ function isNearBottom(threshold = 200) {
 }
 
 /* =========================
-   UI: COPILOT-STYLE BUBBLES
+   UI: MESSAGE BUBBLES
 ========================= */
 
 function addMessage(role, text) {
@@ -157,7 +220,21 @@ function addMessage(role, text) {
   div.innerHTML = renderMarkdown(text);
   chatBox.appendChild(div);
 
-  // Only auto-scroll if user is already near bottom
+  // Save into current chat
+  if (!suppressChatSave && currentChatId && chats[currentChatId]) {
+    chats[currentChatId].messages.push({ role, text });
+
+    if (
+      role === "you" &&
+      (!chats[currentChatId].title || chats[currentChatId].title === "New Chat")
+    ) {
+      chats[currentChatId].title = text.slice(0, 30) || "Chat";
+    }
+
+    saveChats();
+    renderChatList();
+  }
+
   if (isNearBottom(220)) {
     scrollToBottom({ smooth: true });
   }
@@ -186,19 +263,6 @@ function showThinking() {
 function removeThinking() {
   const t = document.getElementById("thinkingBubble");
   if (t) t.remove();
-}
-
-/* =========================
-   LOAD CHAT
-========================= */
-
-function loadChat() {
-  conversationMemory.forEach(m => {
-    addMessage(m.role === "user" ? "you" : "ai", m.content);
-  });
-
-  // After loading history, jump to bottom without animation
-  scrollToBottom({ smooth: false });
 }
 
 /* =========================
@@ -272,7 +336,7 @@ async function testNetworkSpeed() {
 setInterval(testNetworkSpeed, 5000);
 
 /* =========================
-   INIT MODEL - Official Qwen2.5-1.5B from Hugging Face
+   INIT MODEL - Qwen2.5-1.5B
 ========================= */
 
 async function initLLM() {
@@ -305,7 +369,7 @@ async function initLLM() {
 }
 
 /* =========================
-   INTERNET SEARCH (Azure Static Web Apps)
+   INTERNET SEARCH (Azure SWA)
 ========================= */
 
 async function webSearch(query) {
@@ -332,12 +396,10 @@ async function webSearch(query) {
 ========================= */
 
 if (scrollBtn && main) {
-  // Click → scroll to bottom
   scrollBtn.addEventListener("click", () => {
     scrollToBottom({ smooth: true });
   });
 
-  // Show/hide depending on scroll position
   main.addEventListener("scroll", () => {
     const nearBottom = isNearBottom(120);
     if (nearBottom) {
@@ -349,6 +411,32 @@ if (scrollBtn && main) {
 }
 
 /* =========================
+   BUILD LLM MESSAGES FROM CHAT
+========================= */
+
+function buildLLMMessages(systemContent) {
+  const chat = currentChatId ? chats[currentChatId] : null;
+  const history = chat ? chat.messages : [];
+
+  const llmHistory = history
+    .filter(m => m.role === "you" || m.role === "ai")
+    .map(m => {
+      if (m.role === "you") {
+        return { role: "user", content: m.text };
+      } else {
+        return { role: "assistant", content: m.text };
+      }
+    });
+
+  const messages = [
+    { role: "system", content: systemContent || "You are Nodevora, a helpful assistant." },
+    ...llmHistory
+  ];
+
+  return messages;
+}
+
+/* =========================
    SEND MESSAGE
 ========================= */
 
@@ -356,14 +444,14 @@ sendBtn.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;
 
+  if (!currentChatId || !chats[currentChatId]) {
+    createNewChat();
+  }
+
   addMessage("you", text);
   input.value = "";
 
   addFact(text);
-
-  conversationMemory.push({ role: "user", content: text });
-  trimConversation();
-  saveMemory();
 
   const relevantFacts = getRelevantFacts(text);
   const memoryPrompt = relevantFacts.length
@@ -385,10 +473,7 @@ sendBtn.onclick = async () => {
   const systemContent =
     systemParts.join("\n\n") || "You are Nodevora, a helpful assistant.";
 
-  const messages = [
-    { role: "system", content: systemContent },
-    ...conversationMemory
-  ];
+  const messages = buildLLMMessages(systemContent);
 
   showThinking();
 
@@ -402,10 +487,6 @@ sendBtn.onclick = async () => {
 
     removeThinking();
     addMessage("ai", aiText);
-
-    conversationMemory.push({ role: "assistant", content: aiText });
-    trimConversation();
-    saveMemory();
   } catch (e) {
     removeThinking();
     addMessage("system", "Error generating response: " + e.message);
@@ -425,8 +506,15 @@ input.addEventListener("keydown", (e) => {
 });
 
 /* =========================
-   START
+   STARTUP
 ========================= */
 
-loadChat();
+renderChatList();
+
+if (currentChatId && chats[currentChatId]) {
+  loadChatById(currentChatId);
+} else {
+  createNewChat();
+}
+
 initLLM();
