@@ -5,30 +5,29 @@
   <title>Nodevora</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- External CSS -->
-  <link rel="stylesheet" href="style.css?v=1.0.1">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
   <!-- HEADER -->
-  <div id="header">Nodevora</div>
+  <div id="header">
+    <button id="collapseBtn">☰</button>
+    <div id="headerTitle">Nodevora</div>
+  </div>
 
-  <!-- SIDEBAR COLLAPSE BUTTON -->
-  <button id="collapseBtn">☰</button>
+  <!-- SIDEBAR (Collapsible Chat Manager) -->
+  <div id="sidebar">
+    <button id="newChatBtn" class="side-icon">＋ New Chat</button>
+
+    <div id="chatList"></div>
+  </div>
 
   <!-- SYSTEM PANEL -->
   <div id="systemPanel">
     <div class="metric"><strong>RAM:</strong> <span id="ramUsage">--%</span></div>
     <div class="metric"><strong>Net:</strong> <span id="netSpeed">-- Mbps</span></div>
     <div class="metric"><strong>Status:</strong> <span id="netStatus">Offline</span></div>
-  </div>
-
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <div class="side-icon">💬</div>
-    <div class="side-icon">⭐</div>
-    <div class="side-icon">📁</div>
   </div>
 
   <!-- MAIN CHAT AREA -->
