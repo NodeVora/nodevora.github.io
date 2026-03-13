@@ -5,24 +5,24 @@
   <title>Nodevora</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=1.0.2">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
   <!-- ============================================================
-       HEADER BAR
-       Fixed at top, contains collapse button + app title
+       HEADER WITH CENTERED NODEVORA LOGO
   ============================================================ -->
   <header id="header">
     <button id="collapseBtn" aria-label="Toggle sidebar">☰</button>
-    <div id="headerTitle">Nodevora</div>
+
+    <div id="logoContainer">
+      <div id="nodevoraLogo">NODEVORA</div>
+    </div>
   </header>
 
   <!-- ============================================================
        SIDEBAR — CHAT MANAGER
-       Collapsible, contains New Chat + Chat List
   ============================================================ -->
   <aside id="sidebar" aria-label="Chat history">
     <button id="newChatBtn" class="side-icon">＋ New Chat</button>
@@ -31,7 +31,6 @@
 
   <!-- ============================================================
        SYSTEM PANEL
-       Shows RAM, network, model, GPU, and LLM status
   ============================================================ -->
   <section id="systemPanel" aria-label="System status">
     <div class="metric"><strong>RAM:</strong> <span id="ramUsage">--%</span></div>
@@ -45,7 +44,6 @@
 
   <!-- ============================================================
        MAIN CHAT AREA
-       Scrollable container for messages
   ============================================================ -->
   <main id="main">
     <div id="chat" aria-live="polite"></div>
@@ -53,7 +51,6 @@
 
   <!-- ============================================================
        INPUT BAR
-       Fixed at bottom, contains text input + send button
   ============================================================ -->
   <footer id="inputBar">
     <input id="input" placeholder="Ask Nodevora…" aria-label="Message input" />
@@ -62,7 +59,6 @@
 
   <!-- ============================================================
        SCROLL-TO-BOTTOM BUTTON
-       Appears when user scrolls up
   ============================================================ -->
   <button id="scrollDownBtn" aria-label="Scroll to bottom">↓</button>
 
